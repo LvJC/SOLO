@@ -85,22 +85,28 @@ class Synthesizer(object):
     def __len__(self):
         return len(self.fg_pool)
 
-    def gen(self, num=None):
-        if num is None:
-            fg_pool = self.fg_pool
-        else:
-            fg_pool = random.sample(self.fg_pool, num)
+    @staticmethod
+    def sample(pool, num):
+        return random.sample(pool, num) if num else pool
+
+    def gen(self, bg_num=None, fg_num=None):
+        fg_pool = random.sample(self.fg_pool, fg_num) if fg_num else self.fg_pool
+        os.makedirs(self.savedir, exist_ok=True)
+
         for img in tqdm(fg_pool):
-            bg_img = random.choice(self.bg_pool)
-            print("Randomly Selected bg_img is: ")
-            print(bg_img)
-            fg_img = cv2.imread(img, cv2.IMREAD_UNCHANGED)
-            bg_img = cv2.imread(bg_img, cv2.IMREAD_UNCHANGED)
-            try:
-                print("Trying to generate new img")
-                new_img = syn_img(fg=fg_img, bg=bg_img)
-            except AssertionError:
-                print("ERROR!")
-                continue
-            md5_hash = hashlib.md5(new_img.tobytes()).hexdigest()
-            cv2.imwrite(os.path.join(self.savedir, md5_hash + ".png"), new_img)
+            print("Synthesize with fg_img:")
+            print(img)
+            for bg_img in random.sample(self.bg_pool, bg_num):
+                bg_img = random.choice(self.bg_pool)
+                print("\tRandomly Selected bg_img is: ")
+                print("\t", bg_img)
+                fg_img = cv2.imread(img, cv2.IMREAD_UNCHANGED)
+                bg_img = cv2.imread(bg_img, cv2.IMREAD_UNCHANGED)
+                try:
+                    print("\tTrying to generate new img")
+                    new_img = syn_img(fg=fg_img, bg=bg_img)
+                except AssertionError:
+                    print("\tERROR!")
+                    continue
+                md5_hash = hashlib.md5(new_img.tobytes()).hexdigest()
+                cv2.imwrite(os.path.join(self.savedir, md5_hash + ".png"), new_img)
