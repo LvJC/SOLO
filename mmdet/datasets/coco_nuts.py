@@ -17,7 +17,7 @@ class CocoNutsDataset(CustomDataset):
     """A toy dataset called Nuts.
     """
 
-    CLASSES = ('date', 'fig', 'hazelnut')
+    CLASSES = ['date', 'fig', 'hazelnut']
 
     def load_annotations(self, ann_file):
         self.coco = COCO(ann_file)
