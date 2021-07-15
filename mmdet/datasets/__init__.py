@@ -5,11 +5,13 @@ from .custom import CustomDataset
 from .dataset_wrappers import ConcatDataset, RepeatDataset
 from .loader import DistributedGroupSampler, GroupSampler, build_dataloader
 from .registry import DATASETS
+from .synthetics import SyntheticsDataset
 from .voc import VOCDataset
 from .wider_face import WIDERFaceDataset
 from .xml_style import XMLDataset
 
 __all__ = [
+    'SyntheticsDataset',
     'CustomDataset', 'XMLDataset', 'CocoDataset', 'VOCDataset',
     'CityscapesDataset', 'GroupSampler', 'DistributedGroupSampler',
     'build_dataloader', 'ConcatDataset', 'RepeatDataset', 'WIDERFaceDataset',
