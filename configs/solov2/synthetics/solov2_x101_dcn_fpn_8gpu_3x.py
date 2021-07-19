@@ -15,13 +15,15 @@ model = dict(
             type='DCNv2',
             deformable_groups=1,
             fallback_on_stride=False),
-        stage_with_dcn=(False, True, True, True)),
+        stage_with_dcn=(False, True, True, True)
+    ),
     neck=dict(
         type='FPN',
         in_channels=[256, 512, 1024, 2048],
         out_channels=256,
         start_level=0,
-        num_outs=5),
+        num_outs=5
+    ),
     bbox_head=dict(
         type='SOLOv2Head',
         # change num_classes
@@ -46,22 +48,28 @@ model = dict(
             gamma=2.0,
             alpha=0.25,
             loss_weight=6.0),
+        # loss_ins=dict(
+        #     type='CrossEntropyLoss',
+        #     use_sigmoid=True,
+        #     loss_weight=3.0),
         loss_cate=dict(
             type='FocalLoss',
             use_sigmoid=True,
             gamma=2.0,
             alpha=0.25,
-            loss_weight=1.0)),
+            loss_weight=1.0),
+    ),
     mask_feat_head=dict(
-            type='MaskFeatHead',
-            in_channels=256,
-            out_channels=128,
-            start_level=0,
-            end_level=3,
-            num_classes=256,
-            conv_cfg=dict(type='DCNv2'),
-            norm_cfg=dict(type='GN', num_groups=32, requires_grad=True)),
-    )
+        type='MaskFeatHead',
+        in_channels=256,
+        out_channels=128,
+        start_level=0,
+        end_level=3,
+        num_classes=256,
+        conv_cfg=dict(type='DCNv2'),
+        norm_cfg=dict(type='GN', num_groups=32, requires_grad=True)
+    ),
+)
 # training and testing settings
 train_cfg = dict()
 test_cfg = dict(
@@ -108,7 +116,7 @@ test_pipeline = [
 ]
 data = dict(
     imgs_per_gpu=16,
-    workers_per_gpu=2,
+    workers_per_gpu=8,
     train=dict(
         type=dataset_type,
         ann_file=data_root + 'annotations/instances_train.json',
@@ -133,7 +141,7 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=500,
     warmup_ratio=0.01,
-    step=[27, 33])
+    step=[27//4, 33//4])
 checkpoint_config = dict(interval=1)
 # yapf:disable
 log_config = dict(
@@ -144,11 +152,11 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 50
+total_epochs = 50//4
 device_ids = range(2)
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/solov2_release_x101_dcn_fpn_2gpu_3x_6lambda_bothfocalloss'
+work_dir = './work_dirs/solov2_release_x101_dcn_fpn_2gpu_3x_6lambda_bothfocalloss_Tdiv4_1'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]
