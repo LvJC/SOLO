@@ -235,17 +235,21 @@ def main():
     else:
         model.CLASSES = dataset.CLASSES
 
-    if not distributed:
-        model = MMDataParallel(model, device_ids=[0])
-        outputs = single_gpu_test(model, data_loader, args.show)
+    if not os.path.exists(args.out):
+        if not distributed:
+            model = MMDataParallel(model, device_ids=[0])
+            outputs = single_gpu_test(model, data_loader, args.show)
+        else:
+            model = MMDistributedDataParallel(model.cuda())
+            outputs = multi_gpu_test(model, data_loader, args.tmpdir, args.gpu_collect)
     else:
-        model = MMDistributedDataParallel(model.cuda())
-        outputs = multi_gpu_test(model, data_loader, args.tmpdir, args.gpu_collect)
+        outputs = mmcv.load(args.out)
 
     rank, _ = get_dist_info()
     if args.out and rank == 0:
-        print("\nwriting results to {}".format(args.out))
-        mmcv.dump(outputs, args.out)
+        if not os.path.exists(args.out):
+            print("\nwriting results to {}".format(args.out))
+            mmcv.dump(outputs, args.out)
         eval_types = args.eval
         if eval_types:
             print("Starting evaluate {}".format(" and ".join(eval_types)))

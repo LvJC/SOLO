@@ -13,6 +13,7 @@ import datetime
 import glob
 import imagesize
 import json
+import mmcv
 import numpy as np
 import os
 import os.path as osp
@@ -73,6 +74,10 @@ def genCats(dataroot) -> List:
             "supercategory": cat,
             "id": idx+1,  # noqa
             "name": cat
+            # use for class-agnostic mask
+            # "supercategory": 'object',
+            # "id": 1,  # noqa
+            # "name": 'object'
         })
     return categories
 
@@ -92,9 +97,90 @@ def genImgs(dataroot):
         })
     return images
 
-def genAnns(dataroot):
-    imgpaths = glob.glob(dataroot + '/*/*.png')
+def proc_one_img(image_id, imgpath, coco_output, CATEGORIES):
+    global segmentation_id
+    # image
+    filename = osp.basename(imgpath)
+    img = cv2.imread(imgpath, cv2.IMREAD_UNCHANGED)
+    image_info = pycococreatortools.create_image_info(
+        image_id,
+        filename,
+        getSize(imgpath)
+    )
+    coco_output["images"].append(image_info)
+
+    # annotation
+    mask = img[:, :, -1]
+    bin_mask = np.where(mask > 128, 1, 0)
+    class_id = [x['id'] for x in CATEGORIES if x['name'] in imgpath][0]
+    # class_id = 1  # use for class-agnostic mask
+
+    category_info = {'id': class_id, 'is_crowd': 0}
+    # We use RLE encode in pycococreatortools.create_annotation_info 
+    # neverthless what is_crowd is to enable hole encoded in mask
+    annotation_info = pycococreatortools.create_annotation_info(
+        segmentation_id,
+        image_id,
+        category_info,
+        bin_mask,
+        getSize(imgpath),
+        tolerance=2
+    ) 
+    if annotation_info is not None:
+        coco_output["annotations"].append(annotation_info)
+    segmentation_id += 1
+
+
+def genAnnsMp(dataroot):
+    import concurrent.futures
+    imgpaths = glob.glob(dataroot + '/**/*.png')
     imgpaths.sort()
+
+    # imgpaths_rope = [x for x in imgpaths if 'Rope' in x]
+    # import random
+    # random.seed(0)
+    # imgpaths = random.sample(imgpaths, 100)
+    # imgpaths.extend(imgpaths_rope[:100])
+
+    CATEGORIES = genCats(dataroot)
+    coco_output = {
+        "info": INFO,
+        "licenses": LICENSES,
+        "categories": CATEGORIES,
+        "images": [],
+        "annotations": []
+    }
+
+    # img id starts from 0
+    # segmentation_id = 1
+    global segmentation_id
+    with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
+        futures = {
+            executor.submit(proc_one_img, image_id, imgpath, coco_output, CATEGORIES):
+            (image_id, imgpath) for (image_id, imgpath) in enumerate(imgpaths)
+        }
+        prog_bar = mmcv.ProgressBar(len(imgpaths))
+        for future in concurrent.futures.as_completed(futures):
+            image_id, imgpath = futures[future]
+            try:
+                result = future.result()
+            except Exception as exc:
+                print('%r generated an exception: %s' % (imgpath, exc))
+            prog_bar.update()
+    
+    return coco_output
+
+
+def genAnns(dataroot):
+    imgpaths = glob.glob(dataroot + '/**/*.png')
+    imgpaths.sort()
+
+    # imgpaths_rope = [x for x in imgpaths if 'Rope' in x]
+    # import random
+    # random.seed(0)
+    # imgpaths = random.sample(imgpaths, 100)
+    # imgpaths.extend(imgpaths_rope[:100])
+
     CATEGORIES = genCats(dataroot)
     coco_output = {
         "info": INFO,
@@ -121,7 +207,11 @@ def genAnns(dataroot):
         mask = img[:, :, -1]
         bin_mask = np.where(mask > 128, 1, 0)
         class_id = [x['id'] for x in CATEGORIES if x['name'] in imgpath][0]
-        category_info = {'id': class_id, 'is_crowd': 'crowd' in filename}
+        # class_id = 1  # use for class-agnostic mask
+
+        category_info = {'id': class_id, 'is_crowd': 0}
+        # We use RLE encode in pycococreatortools.create_annotation_info 
+        # neverthless what is_crowd is to enable hole encoded in mask
         annotation_info = pycococreatortools.create_annotation_info(
             segmentation_id,
             image_id,
@@ -145,11 +235,16 @@ if __name__ == '__main__':
     parser.add_argument(
         '--split', type=str, help='choose from train/val/test'
     )
+    parser.add_argument(
+        '--ann_dir', type=str, help='annotation directory'
+    )
     args = parser.parse_args()
     
     # dataroot = "/ldap_home/jincheng.lyu/data/product_segmentation/synthetics/train"
     dataroot = osp.join(args.dataroot, args.split)
-    coco_output = genAnns(dataroot)
+    segmentation_id = 1
+    coco_output = genAnnsMp(dataroot)
     
-    with open(f"instances_{args.split}.json", 'w') as f:
+    ann_path = osp.join(args.ann_dir, f"instances_{args.split}.json")
+    with open(ann_path, 'w') as f:
         json.dump(coco_output, f, indent=4)

@@ -1,16 +1,15 @@
+import numpy as np
 import random
 import re
-from collections import OrderedDict
-
-import numpy as np
 import torch
 import torch.distributed as dist
+from collections import OrderedDict
 from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
 from mmcv.runner import DistSamplerSeedHook, Runner, obj_from_dict
 
 from mmdet import datasets
 from mmdet.core import (CocoDistEvalmAPHook, CocoDistEvalRecallHook,
-                        DistEvalmAPHook, DistOptimizerHook, Fp16OptimizerHook)
+                        DistEvalmAPHook, DistOptimizerHook, Fp16OptimizerHook,)
 from mmdet.datasets import DATASETS, build_dataloader
 from mmdet.models import RPN
 from mmdet.utils import get_root_logger

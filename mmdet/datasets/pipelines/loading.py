@@ -1,7 +1,6 @@
-import os.path as osp
-
 import mmcv
 import numpy as np
+import os.path as osp
 import pycocotools.mask as maskUtils
 
 from ..registry import PIPELINES

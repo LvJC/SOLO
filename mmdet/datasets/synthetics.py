@@ -16,7 +16,7 @@ from .registry import DATASETS
 
 @DATASETS.register_module
 class SyntheticsDataset(CustomDataset):
-    """synthetics dataset inherited from CustomDataset."""
+    """Synthetics dataset inherited from CustomDataset."""
 
     CLASSES = [
         "Air conditioner",
@@ -241,6 +241,7 @@ class SyntheticsDataset(CustomDataset):
         "Women shoes",
         "Yogurt",
     ]
+    # CLASSES = ['background', 'object']  # use for class-agnostic segm
 
     def load_annotations(self, ann_file):
         self.coco = COCO(ann_file)
@@ -328,13 +329,17 @@ class SyntheticsDataset(CustomDataset):
             if ann["category_id"] not in self.cat_ids:
                 continue
             bbox = [x1, y1, x1 + w, y1 + h]
-            if ann.get("iscrowd", False):
-                gt_bboxes_ignore.append(bbox)
-            else:
-                gt_bboxes.append(bbox)
-                # left 0 to be bk, all instance start from 1
-                gt_labels.append(self.cat2label[ann["category_id"]] + 1)
-                gt_masks_ann.append(ann["segmentation"])
+
+            """we use iscrowd to enable mask image to be encoded
+            into RLE format
+            """
+            # if ann.get("iscrowd", False):
+            #     gt_bboxes_ignore.append(bbox)
+            # else:
+            gt_bboxes.append(bbox)
+            # left 0 to be bk, all instance start from 1
+            gt_labels.append(self.cat2label[ann["category_id"]] + 1)
+            gt_masks_ann.append(ann["segmentation"])
 
         if gt_bboxes:
             gt_bboxes = np.array(gt_bboxes, dtype=np.float32)

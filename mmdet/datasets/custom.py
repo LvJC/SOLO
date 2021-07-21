@@ -1,7 +1,6 @@
-import os.path as osp
-
 import mmcv
 import numpy as np
+import os.path as osp
 from torch.utils.data import Dataset
 
 from .pipelines import Compose
@@ -141,6 +140,7 @@ class CustomDataset(Dataset):
         if self.proposals is not None:
             results['proposals'] = self.proposals[idx]
         self.pre_pipeline(results)
+        # below is where to load polygon mask into numpy array
         return self.pipeline(results)
 
     def prepare_test_img(self, idx):
@@ -149,4 +149,5 @@ class CustomDataset(Dataset):
         if self.proposals is not None:
             results['proposals'] = self.proposals[idx]
         self.pre_pipeline(results)
+        # below is where to load polygon mask into numpy array
         return self.pipeline(results)

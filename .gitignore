@@ -116,8 +116,11 @@ data
 *.segm.json
 *.log.json
 work_dirs/
+results/
 
 # Pytorch
 *.pth
 
 *.out
+instances_*.json
+*.ipynb

@@ -20,8 +20,9 @@ class Compose(object):
                 raise TypeError('transform must be callable or a dict')
 
     def __call__(self, data):
-        for t in self.transforms:
+        for i, t in enumerate(self.transforms):
             data = t(data)
+            # print(i, t, data)
             if data is None:
                 return None
         return data

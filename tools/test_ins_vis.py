@@ -12,13 +12,8 @@ from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
 from mmcv.runner import get_dist_info, init_dist, load_checkpoint
 from scipy import ndimage
 
-from mmdet.core import (
-    coco_eval,
-    get_classes,
-    results2json,
-    tensor2imgs,
-    wrap_fp16_model,
-)
+from mmdet.core import (coco_eval, get_classes, results2json, tensor2imgs,
+                        wrap_fp16_model,)
 from mmdet.datasets import build_dataloader, build_dataset
 from mmdet.models import build_detector
 
@@ -28,7 +23,7 @@ def vis_seg(data, result, img_norm_cfg, data_id, colors, score_thr, save_dir):
     img_metas = data["img_meta"][0].data[0]
     imgs = tensor2imgs(img_tensor, **img_norm_cfg)
     assert len(imgs) == len(img_metas)
-    class_names = get_classes("coco")
+    class_names = get_classes("pinctada")
 
     for img, img_meta, cur_result in zip(imgs, img_metas, result):
         if cur_result is None:
@@ -73,7 +68,6 @@ def vis_seg(data, result, img_norm_cfg, data_id, colors, score_thr, save_dir):
 
             cur_cate = cate_label[idx]
             cur_score = cate_score[idx]
-
             label_text = class_names[cur_cate]
             # label_text += '|{:.02f}'.format(cur_score)
             # center

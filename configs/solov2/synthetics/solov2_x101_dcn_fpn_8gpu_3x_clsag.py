@@ -115,9 +115,9 @@ test_pipeline = [
         ])
 ]
 
-ann_root = '/ldap_home/jincheng.lyu/project/SOLO/data/pinctada/annotations/'
+ann_root = '/ldap_home/jincheng.lyu/project/SOLO/data/pinctada/annotations_clsag/'
 data = dict(
-    imgs_per_gpu=16,
+    imgs_per_gpu=32,
     workers_per_gpu=8,
     train=dict(
         type=dataset_type,
@@ -159,7 +159,7 @@ total_epochs = 50//4
 device_ids = range(2)
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/solov2_release_x101_dcn_fpn_2gpu_3x_6lambda_bothfocalloss_Tdiv4_rlemask'
+work_dir = './work_dirs/solov2_release_x101_dcn_fpn_2gpu_3x_6lambda_bothfocalloss_Tdiv4_rlemask_clsag'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]

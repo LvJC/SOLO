@@ -12,12 +12,8 @@ import torch.distributed as dist
 from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
 from mmcv.runner import get_dist_info, init_dist, load_checkpoint
 
-from mmdet.core import (
-    coco_eval,
-    results2json,
-    results2json_segm,
-    wrap_fp16_model,
-)
+from mmdet.core import (coco_eval, results2json, results2json_segm,
+                        wrap_fp16_model,)
 from mmdet.datasets import build_dataloader, build_dataset
 from mmdet.models import build_detector
 
@@ -215,17 +211,21 @@ def main():
     else:
         model.CLASSES = dataset.CLASSES
 
-    if not distributed:
-        model = MMDataParallel(model, device_ids=[0])
-        outputs = single_gpu_test(model, data_loader)
+    if not os.path.exists(args.out):
+        if not distributed:
+            model = MMDataParallel(model, device_ids=[0])
+            outputs = single_gpu_test(model, data_loader)
+        else:
+            model = MMDistributedDataParallel(model.cuda())
+            outputs = multi_gpu_test(model, data_loader, args.tmpdir)
     else:
-        model = MMDistributedDataParallel(model.cuda())
-        outputs = multi_gpu_test(model, data_loader, args.tmpdir)
+        outputs = mmcv.load(args.out)
 
     rank, _ = get_dist_info()
     if args.out and rank == 0:
-        print("\nwriting results to {}".format(args.out))
-        mmcv.dump(outputs, args.out)
+        if not os.path.exists(args.out):
+            print("\nwriting results to {}".format(args.out))
+            mmcv.dump(outputs, args.out)
         eval_types = args.eval
         if eval_types:
             print("Starting evaluate {}".format(" and ".join(eval_types)))
