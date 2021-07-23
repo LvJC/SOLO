@@ -63,22 +63,24 @@ def getSize(imgpath):
     
 #     return 
 
-def genCats(dataroot) -> List:
-    dataroot = "/ldap_home/jincheng.lyu/data/product_segmentation/synthetics/train"
+def genCats(dataroot, classwise=True) -> List:
     cat_list = os.listdir(dataroot)
     cat_list.sort()
     categories = []
     # cat id starts from 1
-    for idx, cat in enumerate(cat_list):
-        categories.append({
-            "supercategory": cat,
-            "id": idx+1,  # noqa
-            "name": cat
-            # use for class-agnostic mask
-            # "supercategory": 'object',
-            # "id": 1,  # noqa
-            # "name": 'object'
-        })
+    if classwise:
+        for idx, cat in enumerate(cat_list):
+            categories.append({
+                "supercategory": cat,
+                "id": idx+1,  # noqa
+                "name": cat
+            })
+    else:
+        categories = [{
+            "supercategory": 'object',
+            "id": 0,  # noqa
+            "name": 'object'
+        }]
     return categories
 
 def genImgs(dataroot):
@@ -112,8 +114,11 @@ def proc_one_img(image_id, imgpath, coco_output, CATEGORIES):
     # annotation
     mask = img[:, :, -1]
     bin_mask = np.where(mask > 128, 1, 0)
-    class_id = [x['id'] for x in CATEGORIES if x['name'] in imgpath][0]
-    # class_id = 1  # use for class-agnostic mask
+    if args.classwise:
+        class_id = [x['id'] for x in CATEGORIES if x['name'] in imgpath][0]
+    else:
+        class_id = [x['id'] for x in CATEGORIES][0]  # use for class-agnostic mask
+    # class_id = 0  # use for class-agnostic mask
 
     category_info = {'id': class_id, 'is_crowd': 0}
     # We use RLE encode in pycococreatortools.create_annotation_info 
@@ -141,8 +146,10 @@ def genAnnsMp(dataroot):
     # random.seed(0)
     # imgpaths = random.sample(imgpaths, 100)
     # imgpaths.extend(imgpaths_rope[:100])
+    # 2.
+    # imgpaths = imgpaths[:100]
 
-    CATEGORIES = genCats(dataroot)
+    CATEGORIES = genCats(dataroot, classwise=args.classwise)
     coco_output = {
         "info": INFO,
         "licenses": LICENSES,
@@ -180,8 +187,10 @@ def genAnns(dataroot):
     # random.seed(0)
     # imgpaths = random.sample(imgpaths, 100)
     # imgpaths.extend(imgpaths_rope[:100])
+    # 2.
+    # imgpaths = imgpaths[:100]
 
-    CATEGORIES = genCats(dataroot)
+    CATEGORIES = genCats(dataroot, classwise=args.classwise)
     coco_output = {
         "info": INFO,
         "licenses": LICENSES,
@@ -206,8 +215,10 @@ def genAnns(dataroot):
         # annotation
         mask = img[:, :, -1]
         bin_mask = np.where(mask > 128, 1, 0)
-        class_id = [x['id'] for x in CATEGORIES if x['name'] in imgpath][0]
-        # class_id = 1  # use for class-agnostic mask
+        if args.classwise:
+            class_id = [x['id'] for x in CATEGORIES if x['name'] in imgpath][0]
+        else:
+            class_id = [x['id'] for x in CATEGORIES][0]  # use for class-agnostic mask
 
         category_info = {'id': class_id, 'is_crowd': 0}
         # We use RLE encode in pycococreatortools.create_annotation_info 
@@ -223,7 +234,6 @@ def genAnns(dataroot):
         if annotation_info is not None:
             coco_output["annotations"].append(annotation_info)
         segmentation_id += 1
-    
     return coco_output
 
 if __name__ == '__main__':
@@ -237,6 +247,9 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--ann_dir', type=str, help='annotation directory'
+    )
+    parser.add_argument(
+        '--classwise', action='store_true', help='set to class-specified dataset'
     )
     args = parser.parse_args()
     

@@ -12,8 +12,8 @@ from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
 from mmcv.runner import get_dist_info, init_dist, load_checkpoint
 from scipy import ndimage
 
-from mmdet.core import (coco_eval, get_classes, results2json, tensor2imgs,
-                        wrap_fp16_model,)
+from mmdet.core import (coco_eval, get_classes, results2json,
+                        results2json_segm, tensor2imgs, wrap_fp16_model,)
 from mmdet.datasets import build_dataloader, build_dataset
 from mmdet.models import build_detector
 
@@ -23,7 +23,7 @@ def vis_seg(data, result, img_norm_cfg, data_id, colors, score_thr, save_dir):
     img_metas = data["img_meta"][0].data[0]
     imgs = tensor2imgs(img_tensor, **img_norm_cfg)
     assert len(imgs) == len(img_metas)
-    class_names = get_classes("pinctada")
+    class_names = get_classes("pinctada_clsag")
 
     for img, img_meta, cur_result in zip(imgs, img_metas, result):
         if cur_result is None:
@@ -73,14 +73,15 @@ def vis_seg(data, result, img_norm_cfg, data_id, colors, score_thr, save_dir):
             # center
             center_y, center_x = ndimage.measurements.center_of_mass(cur_mask)
             vis_pos = (max(int(center_x) - 10, 0), int(center_y))
-            cv2.putText(
+            """cv2.putText(
                 seg_show,
                 label_text,
                 vis_pos,
                 cv2.FONT_HERSHEY_COMPLEX,
                 0.3,
                 (255, 255, 255),
-            )  # green
+            )  # green"""
+        import pdb; pdb.set_trace()
         mmcv.imwrite(seg_show, "{}/{}.jpg".format(save_dir, data_id))
 
 
@@ -94,11 +95,12 @@ def single_gpu_test(model, data_loader, args, cfg=None, verbose=True):
 
     prog_bar = mmcv.ProgressBar(len(dataset))
     for i, data in enumerate(data_loader):
+        if i==10: break
         with torch.no_grad():
             seg_result = model(return_loss=False, rescale=True, **data)
             result = None
         results.append(result)
-
+        import pdb; pdb.set_trace()
         if verbose:
             vis_seg(
                 data,
@@ -264,19 +266,24 @@ def main():
         model.CLASSES = checkpoint["meta"]["CLASSES"]
     else:
         model.CLASSES = dataset.CLASSES
+    import pdb; pdb.set_trace()
 
     assert not distributed
+    # if not os.path.exists(args.out):
     if not distributed:
         model = MMDataParallel(model, device_ids=[0])
         outputs = single_gpu_test(model, data_loader, args, cfg=cfg)
     else:
         model = MMDistributedDataParallel(model.cuda())
         outputs = multi_gpu_test(model, data_loader, args.tmpdir)
+    # else:
+    #     outputs = mmcv.load(args.out)
 
     rank, _ = get_dist_info()
     if args.out and rank == 0:
-        print("\nwriting results to {}".format(args.out))
-        mmcv.dump(outputs, args.out)
+        if not os.path.exists(args.out):
+            print("\nwriting results to {}".format(args.out))
+            mmcv.dump(outputs, args.out)
         eval_types = args.eval
         if eval_types:
             print("Starting evaluate {}".format(" and ".join(eval_types)))
@@ -285,7 +292,7 @@ def main():
                 coco_eval(result_file, eval_types, dataset.coco)
             else:
                 if not isinstance(outputs[0], dict):
-                    result_files = results2json(dataset, outputs, args.out)
+                    result_files = results2json_segm(dataset, outputs, args.out)
                     coco_eval(result_files, eval_types, dataset.coco)
                 else:
                     for name in outputs[0]:

@@ -1,19 +1,18 @@
-import warnings
-
+import cv2
 import matplotlib.pyplot as plt
 import mmcv
 import numpy as np
 import pycocotools.mask as maskUtils
 import torch
+import warnings
 from mmcv.parallel import collate, scatter
 from mmcv.runner import load_checkpoint
+from scipy import ndimage
 
 from mmdet.core import get_classes
 from mmdet.datasets.pipelines import Compose
 from mmdet.models import build_detector
 
-import cv2
-from scipy import ndimage
 
 def init_detector(config, checkpoint=None, device='cuda:0'):
     """Initialize a detector from config file.

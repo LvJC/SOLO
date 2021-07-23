@@ -310,6 +310,9 @@ def pinctada_classes():
         "Yogurt",
     ]
 
+def pinctada_clsag_classes():
+    return ['object']
+
 
 dataset_aliases = {
     'voc': ['voc', 'pascal_voc', 'voc07', 'voc12'],
@@ -318,7 +321,8 @@ dataset_aliases = {
     'coco': ['coco', 'mscoco', 'ms_coco'],
     'wider_face': ['WIDERFaceDataset', 'wider_face', 'WDIERFace'],
     'cityscapes': ['cityscapes'],
-    'pinctada': ['pinctada']
+    'pinctada': ['pinctada'],
+    'pinctada_clsag': ['pinctada_clsag']
 }
 
 

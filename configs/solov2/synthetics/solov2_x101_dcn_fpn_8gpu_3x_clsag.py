@@ -27,7 +27,7 @@ model = dict(
     bbox_head=dict(
         type='SOLOv2Head',
         # change num_classes
-        num_classes=222,
+        num_classes=2,  # 1+1 foreground+background
         in_channels=256,
         stacked_convs=4,
         use_dcn_in_tower=True,
@@ -159,7 +159,7 @@ total_epochs = 50//4
 device_ids = range(2)
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/solov2_release_x101_dcn_fpn_2gpu_3x_6lambda_bothfocalloss_Tdiv4_rlemask_clsag'
+work_dir = './work_dirs/solov2_release_x101_dcn_fpn_2gpu_3x_6lambda_bothfocalloss_Tdiv4_rlemask_clsag_fixhead'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]

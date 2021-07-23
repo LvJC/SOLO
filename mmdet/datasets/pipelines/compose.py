@@ -22,7 +22,9 @@ class Compose(object):
     def __call__(self, data):
         for i, t in enumerate(self.transforms):
             data = t(data)
+            # print(f'Index: {i}')
             # print(i, t, data)
+            # print()
             if data is None:
                 return None
         return data
