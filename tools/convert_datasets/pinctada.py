@@ -256,7 +256,7 @@ if __name__ == '__main__':
     # dataroot = "/ldap_home/jincheng.lyu/data/product_segmentation/synthetics/train"
     dataroot = osp.join(args.dataroot, args.split)
     segmentation_id = 1
-    coco_output = genAnnsMp(dataroot)
+    coco_output = genAnns(dataroot)
     
     ann_path = osp.join(args.ann_dir, f"instances_{args.split}.json")
     with open(ann_path, 'w') as f:

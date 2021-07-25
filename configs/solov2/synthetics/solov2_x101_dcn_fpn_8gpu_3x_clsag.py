@@ -159,7 +159,7 @@ total_epochs = 50//4
 device_ids = range(2)
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/solov2_release_x101_dcn_fpn_2gpu_3x_6lambda_bothfocalloss_Tdiv4_rlemask_clsag_fixhead'
+work_dir = './work_dirs/solov2_release_x101_dcn_fpn_2gpu_3x_6lambda_bothfocalloss_Tdiv4_rlemask_clsag_fixhead_fixcate'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]

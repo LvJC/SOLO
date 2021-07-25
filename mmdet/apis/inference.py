@@ -284,6 +284,6 @@ def show_result_ins(img,
         cv2.putText(img_show, label_text, vis_pos,
                         cv2.FONT_HERSHEY_COMPLEX, 0.3, (255, 255, 255))  # green
     if out_file is None:
-        return img_show
+        return img_show, cur_mask
     else:
         mmcv.imwrite(img_show, out_file)
