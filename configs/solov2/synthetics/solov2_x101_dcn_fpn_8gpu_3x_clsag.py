@@ -82,7 +82,7 @@ test_cfg = dict(
     max_per_img=100)
 # dataset settings
 dataset_type = 'SyntheticsDataset'
-data_root = '/ldap_home/jincheng.lyu/data/product_segmentation/synthetics_cocoformat/'
+data_root = '/ldap_home/jincheng.lyu/data/product_segmentation/synthetics_cocoformat_crop/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
@@ -115,7 +115,7 @@ test_pipeline = [
         ])
 ]
 
-ann_root = '/ldap_home/jincheng.lyu/project/SOLO/data/pinctada/annotations_clsag/'
+ann_root = '/ldap_home/jincheng.lyu/project/SOLO/data/pinctada/annotations_clsag_crop/'
 data = dict(
     imgs_per_gpu=32,
     workers_per_gpu=8,
@@ -159,7 +159,7 @@ total_epochs = 50//4
 device_ids = range(2)
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/solov2_release_x101_dcn_fpn_2gpu_3x_6lambda_bothfocalloss_Tdiv4_rlemask_clsag_fixhead_fixcate'
+work_dir = './work_dirs/solov2_release_x101_dcn_fpn_2gpu_3x_6lambda_bothfocalloss_Tdiv4_rlemask_clsag_fixhead_fixcate_crop'
 load_from = None
-resume_from = None
+resume_from = './work_dirs/solov2_release_x101_dcn_fpn_2gpu_3x_6lambda_bothfocalloss_Tdiv4_rlemask_clsag_fixhead_fixcate_crop/epoch_5.pth'
 workflow = [('train', 1)]

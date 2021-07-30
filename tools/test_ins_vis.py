@@ -4,6 +4,7 @@ import mmcv
 import numpy as np
 import os
 import os.path as osp
+import pycocotools.mask as mask_util
 import shutil
 import tempfile
 import torch
@@ -18,12 +19,29 @@ from mmdet.datasets import build_dataloader, build_dataset
 from mmdet.models import build_detector
 
 
+def get_masks(result, num_classes=80):
+    for cur_result in result:
+        masks = [[] for _ in range(num_classes)]
+        if cur_result is None:
+            return masks
+        seg_pred = cur_result[0].cpu().numpy().astype(np.uint8)
+        cate_label = cur_result[1].cpu().numpy().astype(np.int)
+        cate_score = cur_result[2].cpu().numpy().astype(np.float)
+        num_ins = seg_pred.shape[0]
+        for idx in range(num_ins):
+            cur_mask = seg_pred[idx, ...]
+            rle = mask_util.encode(np.array(cur_mask[:, :, np.newaxis], order="F"))[0]
+            rst = (rle, cate_score[idx])
+            masks[cate_label[idx]].append(rst)
+
+        return masks
+
 def vis_seg(data, result, img_norm_cfg, data_id, colors, score_thr, save_dir):
     img_tensor = data["img"][0]
     img_metas = data["img_meta"][0].data[0]
     imgs = tensor2imgs(img_tensor, **img_norm_cfg)
     assert len(imgs) == len(img_metas)
-    class_names = get_classes("pinctada_clsag")
+    class_names = get_classes("pinctada")  # pinctada_clsag
 
     for img, img_meta, cur_result in zip(imgs, img_metas, result):
         if cur_result is None:
@@ -53,6 +71,13 @@ def vis_seg(data, result, img_norm_cfg, data_id, colors, score_thr, save_dir):
         seg_label = seg_label[orders]
         cate_label = cate_label[orders]
         cate_score = cate_score[orders]
+        
+        # Combine to one mask to use it in a second prediction
+        mask_all = np.sum(seg_label, axis=0)
+        mask_all = (mask_all > 0.5).astype(np.int32)
+        mask_all *= 255
+        img_ori = mmcv.imread(img_meta['filename'])
+        img_pred = np.dstack((img_ori, mask_all))
 
         seg_show = img_show.copy()
         for idx in range(num_mask):
@@ -81,8 +106,11 @@ def vis_seg(data, result, img_norm_cfg, data_id, colors, score_thr, save_dir):
                 0.3,
                 (255, 255, 255),
             )  # green"""
-        import pdb; pdb.set_trace()
         mmcv.imwrite(seg_show, "{}/{}.jpg".format(save_dir, data_id))
+        # Save predicted png
+        pred_save_dir = osp.join(save_dir, '../pred')
+        # ori_filename = osp.basename(img_meta['filename'])
+        mmcv.imwrite(img_pred, "{}/{}.png".format(pred_save_dir, data_id))
 
 
 def single_gpu_test(model, data_loader, args, cfg=None, verbose=True):
@@ -90,17 +118,19 @@ def single_gpu_test(model, data_loader, args, cfg=None, verbose=True):
     results = []
     dataset = data_loader.dataset
 
+    num_classes = len(dataset.CLASSES)
     class_num = 1000  # ins
     colors = [(np.random.random((1, 3)) * 255).tolist()[0] for i in range(class_num)]
 
     prog_bar = mmcv.ProgressBar(len(dataset))
     for i, data in enumerate(data_loader):
-        if i==10: break
+        # if i == 100: break
         with torch.no_grad():
             seg_result = model(return_loss=False, rescale=True, **data)
-            result = None
+
+        result = get_masks(seg_result, num_classes=num_classes)
         results.append(result)
-        import pdb; pdb.set_trace()
+
         if verbose:
             vis_seg(
                 data,
@@ -266,7 +296,6 @@ def main():
         model.CLASSES = checkpoint["meta"]["CLASSES"]
     else:
         model.CLASSES = dataset.CLASSES
-    import pdb; pdb.set_trace()
 
     assert not distributed
     # if not os.path.exists(args.out):

@@ -287,3 +287,4 @@ def show_result_ins(img,
         return img_show, cur_mask
     else:
         mmcv.imwrite(img_show, out_file)
+        return img_show, cur_mask

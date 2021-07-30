@@ -12,7 +12,7 @@ def coco_eval(result_files,
               result_types,
               coco,
               max_dets=(100, 300, 1000),
-              classwise=False):
+              classwise=True):
     for res_type in result_types:
         assert res_type in [
             'proposal', 'proposal_fast', 'bbox', 'segm', 'keypoints'
@@ -200,6 +200,7 @@ def segm2json(dataset, results):
 def segm2json_segm(dataset, results):
     segm_json_results = []
     for idx in range(len(dataset)):
+        # if idx == 100: break
         img_id = dataset.img_ids[idx]
         seg = results[idx]
         for label in range(len(seg)):
@@ -210,10 +211,14 @@ def segm2json_segm(dataset, results):
                 data = dict()
                 data['image_id'] = img_id
                 data['score'] = float(mask_score)
-                data['category_id'] = dataset.cat_ids[label]
+                try:
+                    data['category_id'] = dataset.cat_ids[label]
+                except:
+                    import pdb; pdb.set_trace()
                 segm['counts'] = segm['counts'].decode()
                 data['segmentation'] = segm
                 segm_json_results.append(data)
+        
     return segm_json_results
 
 

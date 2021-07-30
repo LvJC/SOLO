@@ -2,12 +2,13 @@
 # -*- encoding: utf-8 -*-
 '''
 @Time    :   2021/07/13
-@Author  :   jincheng.lyu@shopee.com
+@Author  :   jincheng.lyu
 
 1. Get all categories
 2. Generate label for each image
 3. All images by using multithreading
 '''
+
 import cv2
 import datetime
 import glob
@@ -18,9 +19,10 @@ import numpy as np
 import os
 import os.path as osp
 from pycococreatortools import pycococreatortools
-from pycocotools.mask import area, decode, encode, frPyObjects, toBbox
 from tqdm import tqdm
 from typing import List
+
+from mmdet.core import get_classes
 
 INFO = {
     "description": "Leaf Dataset",
@@ -44,31 +46,18 @@ def getSize(imgpath):
     # print(width, height)
     return width, height
 
-# def encodeBinMask(imgpath):
-#     img = cv2.imread(imgpath, cv2.IMREAD_UNCHANGED)
-#     mask = img[:, :, -1]
-#     uint8_mask = np.uint8(mask)
-#     bin_mask = np.where(mask > 128, 1, 0)
-
-#     Rs = encode(np.asfortranarray(uint8_mask))
-#     uint8_mask = decode(Rs)
-
-#     binRs = encode(np.asfortranarray(bin_mask, dtype=np.uint8))
-#     bin_mask = decode(binRs)
-
-#     x, y, w, h = toBbox(binRs)
-#     annotation_info = pycococreatortools.create_annotation_info(
-#                             segmentation_id, image_id, category_info, bin_mask,
-#                             image.size, tolerance=2) 
-    
-#     return 
-
 def genCats(dataroot, classwise=True) -> List:
     cat_list = os.listdir(dataroot)
     cat_list.sort()
     categories = []
+    
     # cat id starts from 1
     if classwise:
+        # check number of categories
+        if len(cat_list) != len(get_classes("pinctada")):
+            print(f"*** Warning: length of categories in {dataroot} is not the same \
+                with dataset, we will use the dataset category names")
+            cat_list = get_classes("pinctada")
         for idx, cat in enumerate(cat_list):
             categories.append({
                 "supercategory": cat,
@@ -84,7 +73,7 @@ def genCats(dataroot, classwise=True) -> List:
     return categories
 
 def genImgs(dataroot):
-    imgpaths = glob.glob(dataroot + '/*/*.png')
+    imgpaths = glob.glob(dataroot + '/*.png')
     imgpaths.sort()
     images = []
     # img id starts from 0
@@ -181,7 +170,6 @@ def genAnnsMp(dataroot):
 def genAnns(dataroot):
     imgpaths = glob.glob(dataroot + '/**/*.png')
     imgpaths.sort()
-
     # imgpaths_rope = [x for x in imgpaths if 'Rope' in x]
     # import random
     # random.seed(0)
@@ -256,7 +244,7 @@ if __name__ == '__main__':
     # dataroot = "/ldap_home/jincheng.lyu/data/product_segmentation/synthetics/train"
     dataroot = osp.join(args.dataroot, args.split)
     segmentation_id = 1
-    coco_output = genAnns(dataroot)
+    coco_output = genAnnsMp(dataroot)
     
     ann_path = osp.join(args.ann_dir, f"instances_{args.split}.json")
     with open(ann_path, 'w') as f:

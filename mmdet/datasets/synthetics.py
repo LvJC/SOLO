@@ -2,7 +2,7 @@
 # -*- encoding: utf-8 -*-
 """
 @Time    :   2021/07/06
-@Author  :   lvjincheng@tju.edu.cn
+@Author  :   jincheng.lyu
 """
 
 import mmcv
@@ -18,7 +18,7 @@ from .registry import DATASETS
 class SyntheticsDataset(CustomDataset):
     """Synthetics dataset inherited from CustomDataset."""
 
-    """CLASSES = [
+    CLASSES = [
         "Air conditioner",
         "Alarm clock",
         "Anonymous mask",
@@ -240,8 +240,8 @@ class SyntheticsDataset(CustomDataset):
         "Women bag",
         "Women shoes",
         "Yogurt",
-    ]"""
-    CLASSES = ['object', ]  # use for class-agnostic segm
+    ]
+    # CLASSES = ['object', ]  # use for class-agnostic segm
 
     def load_annotations(self, ann_file):
         self.coco = COCO(ann_file)
