@@ -24,6 +24,7 @@ This project hosts the code for implementing the SOLO algorithms for instance se
 - **State-of-the-art performance:** Our best single model based on ResNet-101 and deformable convolutions achieves **41.7%** in AP on COCO test-dev (without multi-scale testing). A light-weight version of SOLOv2 executes at **31.3** FPS on a single V100 GPU and yields **37.1%** AP.
 
 ## Updates
+   - [Jincheng] Support of converting PNG 4-channel images to COCO RLE format dataset in `tools/convert_datasets/pinctada.py`. (30/07/21)
    - SOLOv2 implemented on detectron2 is released at [adet](https://github.com/aim-uofa/AdelaiDet/blob/master/configs/SOLOv2/README.md). (07/12/20)
    - Training speeds up (~1.7x faster) for all models. (03/12/20)
    - SOLOv2 is available. Code and trained models of SOLOv2 are released. (08/07/2020)
